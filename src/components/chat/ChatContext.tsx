@@ -15,17 +15,7 @@ export const ChatContext = React.createContext<IChatContext>({
 export const useChatContext = () => useContext(ChatContext);
 
 export const ChatContextProvider = ({ children }: React.PropsWithChildren) => {
-    const [messages, setMessages] = useState<Message[]>([
-        { sender: "user", content: "meow" },
-        { sender: "agent", content: "mrrp" },
-        { sender: "user", content: "mrrau" },
-        { sender: "user", content: "mrrau" },
-        { sender: "user", content: "mrrau" },
-        { sender: "user", content: "mrrau" },
-        { sender: "user", content: "mrrau" },
-        { sender: "user", content: "mrrau" },
-        { sender: "user", content: "mrrp" },
-    ]);
+    const [messages, setMessages] = useState<Message[]>([]);
 
     const addMessage = (message: Message) => {
         setMessages(m => [...m, message]);
