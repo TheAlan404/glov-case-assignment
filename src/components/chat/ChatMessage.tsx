@@ -14,7 +14,7 @@ export const ChatMessage = ({
             withBorder
             shadow="md"
         >
-            <Group wrap="nowrap">
+            <Group wrap="nowrap" align="start" gap="sm">
                 <Stack>
                     <Avatar
                         color={message.sender == "user" ? "blue" : "gray"}
@@ -40,6 +40,7 @@ export const ChatMessage = ({
                                 <Image
                                     key={i}
                                     src={attachment.url}
+                                    radius="sm"
                                 />
                             ))}
                         </SimpleGrid>
