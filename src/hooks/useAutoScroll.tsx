@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 
 export const useAutoScroll = (deps: React.DependencyList) => {
     const ref = useRef<HTMLDivElement | null>(null);
-    const atBottom = useRef(false);
+    const atBottom = useRef(true);
 
     useEffect(() => {
         if(ref.current && atBottom.current) {
@@ -15,8 +15,10 @@ export const useAutoScroll = (deps: React.DependencyList) => {
 
         const onScroll = () => {
             if(!ref.current) return;
-            atBottom.current = Math.abs(ref.current.scrollHeight - ref.current.clientHeight - ref.current.scrollTop) <= 1;
+            atBottom.current = ref.current.scrollHeight == ref.current.clientHeight || Math.abs(ref.current.scrollHeight - ref.current.clientHeight - ref.current.scrollTop) <= 1;
         };
+
+        ref.current?.scrollTo({ top: ref.current?.scrollHeight });
 
         ref.current.addEventListener("scroll", onScroll);
 
