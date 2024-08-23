@@ -5,8 +5,11 @@ export type Attachment = {
 
 export type MessageAuthor = "user" | "agent";
 
-export type Message = {
-    sender: MessageAuthor;
+export interface MessageTemplate {
     content: string;
     attachments?: Attachment[];
+};
+
+export interface Message extends MessageTemplate {
+    sender: MessageAuthor;
 };
