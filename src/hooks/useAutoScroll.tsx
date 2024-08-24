@@ -12,18 +12,19 @@ export const useAutoScroll = (deps: React.DependencyList) => {
 
     useEffect(() => {
         if(!ref.current) return;
+        const el = ref.current;
 
         const onScroll = () => {
             if(!ref.current) return;
             atBottom.current = ref.current.scrollHeight == ref.current.clientHeight || Math.abs(ref.current.scrollHeight - ref.current.clientHeight - ref.current.scrollTop) <= 1;
         };
 
-        ref.current?.scrollTo({ top: ref.current?.scrollHeight });
+        el.scrollTo({ top: ref.current?.scrollHeight });
 
-        ref.current.addEventListener("scroll", onScroll);
+        el.addEventListener("scroll", onScroll);
 
         return () => {
-            ref.current?.removeEventListener("scroll", onScroll);
+            el.removeEventListener("scroll", onScroll);
         };
     }, [ref, ...deps]);
 

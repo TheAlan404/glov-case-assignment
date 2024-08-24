@@ -33,13 +33,13 @@ export const calculateAutocompleteInsertions = (
     cursor: number,
     transform: (x: string) => string = (x) => x,
 ) => {
-    let insertions: AutocompleteInsertion[] = [];
+    const insertions: AutocompleteInsertion[] = [];
 
     for(let i = 0; i < content.length; i++) {
-        let text = content.slice(i, cursor);
+        const text = content.slice(i, cursor);
 
-        for(let item of items) {
-            let eq = equalUntil(transform(text), transform(item.value));
+        for(const item of items) {
+            const eq = equalUntil(transform(text), transform(item.value));
             
             if(eq > 1 && (eq + i) == cursor) {
                 insertions.push({
@@ -60,8 +60,8 @@ export const insertAutocomplete = (
     content: string,
     insertion: AutocompleteInsertion
 ) => {
-    let before = content.slice(0, insertion.position);
-    let after = content.slice(insertion.position + insertion.length);
+    const before = content.slice(0, insertion.position);
+    const after = content.slice(insertion.position + insertion.length);
 
     return before + insertion.value + after;
 }

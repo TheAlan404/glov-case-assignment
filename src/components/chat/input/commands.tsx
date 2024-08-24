@@ -30,7 +30,7 @@ export const CommandsList: Command[] = [
         run: (args) => {
             if(args.length !== 1 || !args[0]) return error("Usage: /image <number>");
 
-            let number = Number(args[0]);
+            const number = Number(args[0]);
             if(isNaN(number)) return error(`${args[0]} is not a number`);
 
             const url = getImageURL(number);

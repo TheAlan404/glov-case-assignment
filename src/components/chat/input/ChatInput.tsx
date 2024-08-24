@@ -37,19 +37,19 @@ export const ChatInput = () => {
             }}
 
             getValues={({ content, cursorPosition }) => {
-                let beforeCursor = content.slice(0, cursorPosition);
+                const beforeCursor = content.slice(0, cursorPosition);
 
                 if(beforeCursor[0] == "/") {
                     if(beforeCursor.includes(" ")) {
-                        let [prefix, ...args] = content.split(" ");
-                        let commandName = prefix.slice(1);
+                        const [prefix, ...args] = content.split(" ");
+                        const commandName = prefix.slice(1);
             
-                        let command = CommandsList.find(c => c.name == commandName);
+                        const command = CommandsList.find(c => c.name == commandName);
             
                         if(command) {
                             try {
                                 return command.run(args);
-                            } catch(e: any) {
+                            } catch(e) {
                                 return { errorMessage: (e as Error).message };
                             }
                         } else {
@@ -69,7 +69,7 @@ export const ChatInput = () => {
                         };
                     }
                 } else {
-                    let autocomplete = calculateAutocompleteInsertions(
+                    const autocomplete = calculateAutocompleteInsertions(
                         AutocompleteSuggestions,
                         content,
                         cursorPosition,
@@ -99,12 +99,12 @@ export const ChatInputInner = ({
     const [cursorPosition, setCursorPosition] = useState(0);
     const combobox = useCombobox();
 
-    let {
+    const {
         autocomplete,
         errorMessage,
         messageToSend,
         preview,
-    } = getValues?.({
+    } = getValues({
         content,
         cursorPosition,
     });
@@ -126,8 +126,8 @@ export const ChatInputInner = ({
         <Combobox
             store={combobox}
             onOptionSubmit={(index: string) => {
-                let i = Number(index);
-                let item = (autocomplete || [])[i];
+                const i = Number(index);
+                const item = (autocomplete || [])[i];
                 if(item.sendAsMessage) {
                     onSubmit({
                         content: item.value,
