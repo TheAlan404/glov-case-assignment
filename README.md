@@ -24,7 +24,9 @@ The site should be live at [https://deniz.blue/glov-case-assignment](https://den
   - Additional UX features when the chat recieves a new message, for example a sound effect or a visual flash.
   - An image popup for messages with images
   - Completely rewrite the autocomplete/suggestions logic to be cleaner
+  - More tests and general refactoring
   - A better command handling system
+- The general quality is bad but I think its justifiable considering this is the first case assignment I ever got
 
 ## Development
 

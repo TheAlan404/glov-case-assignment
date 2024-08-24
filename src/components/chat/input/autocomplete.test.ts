@@ -8,11 +8,11 @@ test("autocomplete computation", () => {
         ],
         "sus",
         3,
-    )).toBe({
+    )).toStrictEqual([{
         value: "suspicious",
         position: 0,
         length: 3,
-    })
+    }])
 });
 
 test("autocomplete insertion", () => {
