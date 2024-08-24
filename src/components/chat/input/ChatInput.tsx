@@ -4,7 +4,7 @@ import { IconArrowRight } from "@tabler/icons-react"
 import { useState } from "react";
 import { Message, MessageTemplate } from "../types/message";
 import { CommandResult, CommandsList } from "./commands";
-import { AutocompleteSuggestions } from "./autocomplete";
+import { AutocompleteSuggestions, calculateAutocompleteInsertions, insertAutocomplete } from "./autocomplete";
 
 // TODO
 const agentMessages = [
@@ -23,100 +23,134 @@ const createReply = (): Message => ({
 });
 
 export const ChatInput = () => {
+    const { addMessage } = useChatContext();
+
+    return (
+        <ChatInputInner
+            sendMessage={(template) => {
+                if(!template.content) return;
+
+                addMessage({ ...template, sender: "user" });
+
+                // TODO: remove when out of demo
+                setTimeout(() => addMessage(createReply()), 200);
+            }}
+
+            getValues={({ content, cursorPosition }) => {
+                let beforeCursor = content.slice(0, cursorPosition);
+
+                if(beforeCursor[0] == "/") {
+                    if(beforeCursor.includes(" ")) {
+                        let [prefix, ...args] = content.split(" ");
+                        let commandName = prefix.slice(1);
+            
+                        let command = CommandsList.find(c => c.name == commandName);
+            
+                        if(command) {
+                            try {
+                                return command.run(args);
+                            } catch(e: any) {
+                                return { errorMessage: (e as Error).message };
+                            }
+                        } else {
+                            return {
+                                errorMessage: `Command not found: ${commandName}`,
+                            };
+                        }
+                    } else {
+                        return {
+                            autocomplete: CommandsList.map(x => x.name)
+                                .filter(x => x.toLowerCase().startsWith(content.slice(1).toLowerCase()))
+                                .map(value => ({
+                                    value: value + " ",
+                                    length: content.length-1,
+                                    position: 1,
+                                })),
+                        };
+                    }
+                } else {
+                    let autocomplete = calculateAutocompleteInsertions(
+                        AutocompleteSuggestions,
+                        content,
+                        cursorPosition,
+                        (x) => x.toLowerCase(),
+                    );
+
+                    return {
+                        autocomplete,
+                    };
+                }
+            }}
+        />
+    )
+};
+
+export const ChatInputInner = ({
+    sendMessage,
+    getValues,
+}: {
+    sendMessage?: (message: MessageTemplate) => void;
+    getValues: (ctx: {
+        content: string;
+        cursorPosition: number;
+    }) => CommandResult;
+}) => {
     const [content, setContent] = useState("");
     const [cursorPosition, setCursorPosition] = useState(0);
-    const { addMessage } = useChatContext();
     const combobox = useCombobox();
 
-    let result: CommandResult = {};
-    let autocompleteContent = content;
-    let submitAutocomplete: (value: string) => void = () => {};
-    let autocompleteMode: "startsWith" | "includes" = "includes";
+    let {
+        autocomplete,
+        errorMessage,
+        messageToSend,
+        preview,
+    } = getValues?.({
+        content,
+        cursorPosition,
+    });
 
-    if (content.startsWith("/")) {
-        if(content.includes(" ")) {
-            let [prefix, ...args] = content.split(" ");
-            let commandName = prefix.slice(1);
+    // TODO: is this a good idea?
+    combobox.selectFirstOption();
 
-            let command = CommandsList.find(c => c.name == commandName);
+    const hidden = !(autocomplete || []).length && !preview && !errorMessage;
 
-            if(command) {
-                try {
-                    result = command.run(args);
-                } catch(e: any) {
-                    result = { error: (e as Error).message };
-                }
-            } else {
-                result.error = `Command not found: ${commandName}`;
-            }
-
-            autocompleteContent = args.join(" ");
-            submitAutocomplete = (value: string) => {
-                sendMessage(value);
-            };
-        } else {
-            autocompleteContent = content.slice(1);
-            result.autocomplete = CommandsList.map(command => ({
-                label: command.name,
-                value: command.name,
-            }));
-            submitAutocomplete = (value: string) => {
-                setContent("/" + value + " ");
-            };
-        }
-    } else {
-        autocompleteContent = content.slice(0, cursorPosition);
-        result.autocomplete = AutocompleteSuggestions;
-        autocompleteMode = "startsWith";
-        submitAutocomplete = (value: string) => {
-            // TODO TODO TODO
-            setContent(content.slice(cursorPosition) + value);
-        };
-    }
-
-    const sendMessage = (messageContent?: string) => {
-        if(!content) return;
-
-        let message: MessageTemplate = result.messageToSend || {
-            content: messageContent || content,
-            attachments: [],
-        };
-
-        addMessage({ ...message, sender: "user" });
+    const onSubmit = (override?: MessageTemplate) => {
+        sendMessage?.(override || messageToSend || {
+            content,
+        });
+        setCursorPosition(0);
         setContent("");
-
-        // TODO: remove when out of demo
-        setTimeout(() => addMessage(createReply()), 200);
     };
-
-    let filteredOptions = (result.autocomplete || [])
-        .filter(({ value }) => value.toLowerCase()[autocompleteMode](autocompleteContent.toLowerCase()));
 
     return (
         <Combobox
             store={combobox}
-            onOptionSubmit={submitAutocomplete}
+            onOptionSubmit={(index: string) => {
+                let i = Number(index);
+                let item = (autocomplete || [])[i];
+                if(item.sendAsMessage) {
+                    onSubmit({
+                        content: item.value,
+                    });
+                } else {
+                    setContent(insertAutocomplete(content, item));
+                }
+            }}
         >
-            <Combobox.Dropdown hidden={false && !!content && !result.preview && !filteredOptions.length && !result.error}>
+            <Combobox.Dropdown hidden={hidden}>
                 <Stack w="100%" gap={0}>
                     <Stack align="center">
-                        {result.preview}
+                        {preview}
                     </Stack>
                     <Text c="red">
-                        {result.error}
-                    </Text>
-                    <Text c="cyan">
-                        {cursorPosition}
-                    </Text>
-                    <Text c="green">
-                        {autocompleteContent}
+                        {errorMessage}
                     </Text>
                 </Stack>
                 <Combobox.Options>
                     <ScrollArea.Autosize mah={200} type="scroll" offsetScrollbars="y">
-                        {filteredOptions.map((option, i) => (
-                            <Combobox.Option value={option.value} key={i}>
-                                {option.label}
+                        {(autocomplete || []).map((option, i) => (
+                            <Combobox.Option value={i.toString()} key={i}>
+                                {option.value}
                             </Combobox.Option>
                         ))}
                     </ScrollArea.Autosize>
@@ -130,17 +164,20 @@ export const ChatInput = () => {
                     value={content}
                     onChange={(e) => setContent(e.currentTarget.value)}
                     onKeyDown={(e) => {
-                        if (e.key == "Enter" && !filteredOptions.length) sendMessage();
+                        if (e.key == "Enter" && (!autocomplete?.length || combobox.getSelectedOptionIndex() == -1)) {
+                            onSubmit();
+                        }
                     }}
                     onKeyUp={(e) => {
-                        if (e.currentTarget.selectionStart !== null) setCursorPosition(e.currentTarget.selectionStart);
+                        if (e.currentTarget.selectionStart !== null)
+                            setCursorPosition(e.currentTarget.selectionStart);
                     }}
                     onFocus={() => combobox.openDropdown()}
                     onBlur={() => combobox.closeDropdown()}
                     rightSection={(
                         <Tooltip label="Send">
                             <ActionIcon
-                                onClick={() => sendMessage()}
+                                onClick={() => onSubmit()}
                                 variant="light"
                             >
                                 <IconArrowRight />
@@ -151,4 +188,4 @@ export const ChatInput = () => {
             </Combobox.Target>
         </Combobox>
     )
-};
+}

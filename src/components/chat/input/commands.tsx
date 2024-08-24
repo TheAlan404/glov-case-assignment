@@ -1,13 +1,13 @@
 import React from "react";
 import { MessageTemplate } from "../types/message";
 import { Image } from "@mantine/core";
-import { AutocompleteItem } from "./autocomplete";
+import { AutocompleteInsertion } from "./autocomplete";
 
 export interface CommandResult {
     preview?: React.ReactNode;
     messageToSend?: MessageTemplate;
-    autocomplete?: AutocompleteItem[];
-    error?: string;
+    autocomplete?: AutocompleteInsertion[];
+    errorMessage?: string;
 };
 
 export interface Command {
@@ -17,7 +17,7 @@ export interface Command {
 };
 
 // Utility function
-const error = (error: string) => ({ error });
+const error = (errorMessage: string) => ({ errorMessage });
 
 // TODO
 const IMAGE_PROVIDER = "https://picsum.photos";
@@ -64,7 +64,12 @@ export const CommandsList: Command[] = [
                     "Waffle",
                     "Tea",
                     "A bottle of water",
-                ].map(word => ({ value: word, label: word })),
+                ].map(word => ({
+                    value: word,
+                    length: 0,
+                    position: 0,
+                    sendAsMessage: true,
+                })),
             }
         },
     },
